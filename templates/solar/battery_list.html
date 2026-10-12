@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Batteries{% endblock %}
+{% block page_title %}Battery Monitoring{% endblock %}
+{% block content %}
+<div class="row g-3">
+  {% for battery in batteries %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card card-aqua h-100">
+      <div class="card-header">
+        <span><i class="fas fa-battery-three-quarters me-2"></i>{{ battery.name }}</span>
+        <span id="batteryLiveBadge" class="badge {% if battery.status == 'NORMAL' %}badge-normal{% elif battery.status == 'WARNING' %}badge-warning{% else %}badge-critical{% endif %}">{{ battery.get_status_display }}</span>
+      </div>
+      <div class="card-body">
+        <div class="stat-value mb-2"><span id="batteryLivePercent">{{ battery.percentage }}</span>%</div>
+        <div class="progress progress-aqua mb-3" style="height:12px;">
+          <div id="batteryLiveBar" class="progress-bar {% if battery.status == 'CRITICAL' %}bg-danger{% elif battery.status == 'WARNING' %}bg-warning{% else %}bg-success{% endif %}" style="width:{{ battery.percentage }}%"></div>
+        </div>
+        <p class="mb-1 small">Voltage: <strong><span id="batteryLiveVoltage" data-warning-percent="{{ battery_thresholds.low_warning }}" data-critical-percent="{{ battery_thresholds.low_critical }}" data-empty-voltage="{{ battery_thresholds.empty_voltage }}" data-full-voltage="{{ battery_thresholds.full_voltage }}">{% if firebase_voltage != None %}{{ firebase_voltage }}{% elif latest_solar %}{{ latest_solar.panel_voltage }}{% else %}{{ battery.voltage }}{% endif %}</span> V</strong> <span id="batteryLiveStatus" class="text-muted small">(connecting...)</span></p>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12"><div class="empty-state"><i class="fas fa-battery-empty"></i><p>No batteries configured.</p></div></div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+  {% block extra_js %}
+  <script src="{% static 'js/battery-live.js' %}"></script>
+  {% endblock %}

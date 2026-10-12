@@ -1,0 +1,34 @@
+{
+  "algorithm": "GradientBoostingClassifier",
+  "n_samples_total": 2022,
+  "n_samples_real": 22,
+  "n_samples_synthetic": 2000,
+  "n_train": 1617,
+  "n_test": 405,
+  "accuracy": 0.9654,
+  "f1": 0.9803,
+  "feature_names": [
+    "rain_last_24h_mm",
+    "rain_next_24h_mm",
+    "rain_probability_pct",
+    "humidity_pct",
+    "cloud_cover_pct",
+    "turbidity",
+    "tds",
+    "ph"
+  ],
+  "feature_importances": {
+    "rain_last_24h_mm": 0.036073547858453445,
+    "rain_next_24h_mm": 0.05105278552192904,
+    "rain_probability_pct": 0.14731331082766488,
+    "humidity_pct": 0.022261938131276002,
+    "cloud_cover_pct": 0.01752535826029714,
+    "turbidity": 0.6680255372532486,
+    "tds": 0.03257207093039782,
+    "ph": 0.02517545121673304
+  },
+  "label": "cloudy spring (1=turbid risk, 0=clear)",
+  "dataset_description": "Mixed dataset: real WaterQuality readings from IP Aqua Tech DB (22 rows) + domain-informed synthetic samples (2000 rows) modeling rain/runoff \u2192 turbidity relationship.",
+  "classification_report": "              precision    recall  f1-score   support\n\n           0       0.79      0.93      0.86        45\n           1       0.99      0.97      0.98       360\n\n    accuracy                           0.97       405\n   macro avg       0.89      0.95      0.92       405\nweighted avg       0.97      0.97      0.97       405\n",
+  "model_file": "malabo_rf.joblib"
+}

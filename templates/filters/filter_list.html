@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Filters{% endblock %}
+{% block page_title %}Filtration Monitoring{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <form method="get" class="d-flex gap-2 flex-wrap">
+    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search..." style="width:200px;">
+    <select name="type" class="form-select" style="width:180px;">
+      <option value="">All Types</option>
+      {% for value, label in filter_types.choices %}
+      <option value="{{ value }}" {% if ftype == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-aqua"><i class="fas fa-search"></i></button>
+  </form>
+  <a href="{% url 'filters:filter_create' %}" class="btn btn-aqua"><i class="fas fa-plus me-1"></i>Add Filter</a>
+</div>
+<div class="row g-3">
+  {% for f in page_obj %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card card-aqua h-100">
+      <div class="card-header">
+        <span><i class="fas fa-filter me-2"></i>{{ f.name }}</span>
+        {% if f.condition == 'REPLACE' or f.condition == 'POOR' %}<span class="badge badge-critical">{{ f.get_condition_display }}</span>
+        {% elif f.condition == 'FAIR' %}<span class="badge badge-warning">{{ f.get_condition_display }}</span>
+        {% else %}<span class="badge badge-normal">{{ f.get_condition_display }}</span>{% endif %}
+      </div>
+      <div class="card-body">
+        <p class="small text-muted mb-2">{{ f.get_filter_type_display }}</p>
+        <div class="d-flex justify-content-between mb-1">
+          <span class="fw-semibold">Life Remaining</span>
+          <span>{{ f.life_percentage }}%</span>
+        </div>
+        <div class="progress progress-aqua mb-3 life-bar-{% if f.life_percentage <= 10 %}critical{% elif f.life_percentage <= 25 %}warning{% else %}normal{% endif %}" style="height:10px;">
+          <div class="progress-bar" style="width:{{ f.life_percentage }}%"></div>
+        </div>
+        <p class="mb-1 small">Maintenance: <strong>{{ f.get_maintenance_status_display }}</strong></p>
+        <p class="mb-1 small">Next Replacement: <strong>{{ f.next_replacement_date|date:"M d, Y"|default:"—" }}</strong></p>
+        <p class="mb-1 small">Pressure: <strong>{{ f.system_pressure }} bar</strong></p>
+        <p class="mb-1 small">Flow: <strong>{{ f.flow_status }}</strong></p>
+        <div class="mt-3">
+          <a href="{% url 'filters:filter_detail' f.pk %}" class="btn btn-sm btn-outline-info"><i class="fas fa-eye"></i></a>
+          <a href="{% url 'filters:filter_edit' f.pk %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+          <form method="post" action="{% url 'filters:filter_delete' f.pk %}" class="d-inline" onsubmit="return confirm('Delete filter?');">{% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12"><div class="empty-state"><i class="fas fa-filter"></i><p>No filters found.</p></div></div>
+  {% endfor %}
+</div>
+{% include 'includes/pagination.html' %}
+{% endblock %}

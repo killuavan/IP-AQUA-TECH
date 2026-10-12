@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}IoT{% endblock %}
+{% block page_title %}IoT{% endblock %}
+{% block content %}
+
+<div class="alert alert-aqua {% if firebase_configured %}alert-success{% else %}alert-warning{% endif %} d-flex align-items-center mb-4" role="alert">
+  <i class="fas fa-wifi fa-lg me-3"></i>
+  <div>
+    <strong>{% if firebase_configured %}Firebase connected{% else %}Firebase not configured{% endif %}</strong>
+    <div class="small">ESP data via Firebase or API</div>
+  </div>
+</div>
+
+<h2 class="section-title"><i class="fas fa-microchip"></i> Overview <span class="section-line"></span></h2>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon bg-aqua"><i class="fas fa-microchip"></i></div>
+        <div>
+          <div class="stat-label">Devices</div>
+          <div class="stat-value" style="font-size:1.1rem;">{{ devices|length }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon bg-green"><i class="fas fa-signal"></i></div>
+        <div>
+          <div class="stat-label">Online</div>
+          <div class="stat-value" style="font-size:1.1rem;">{{ online_count }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon bg-blue"><i class="fas fa-satellite-dish"></i></div>
+        <div>
+          <div class="stat-label">Live</div>
+          <div class="stat-value" style="font-size:0.95rem;" id="liveModeLabel">Firebase → Web</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon bg-orange"><i class="fas fa-sync"></i></div>
+        <div>
+          <div class="stat-label">Last sync</div>
+          <div class="stat-value" style="font-size:0.95rem;">
+            {% if recent_logs %}{{ recent_logs.0.started_at|timesince }} ago{% else %}—{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card card-aqua mb-4">
+  <div class="card-body py-3">
+    <div class="d-flex flex-wrap gap-2">
+      <form method="post" action="{% url 'iot:sync_now' %}">{% csrf_token %}
+        <button class="btn btn-primary" type="submit"><i class="fas fa-sync me-1"></i>Sync</button>
+      </form>
+      <a href="{% url 'iot:device_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-list me-1"></i>Devices
+      </a>
+      {% if user.is_admin_user or user.is_superuser %}
+      <a href="{% url 'iot:device_create' %}" class="btn btn-outline-primary">
+        <i class="fas fa-plus me-1"></i>Add device
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="card card-aqua h-100">
+      <div class="card-header">
+        <span><i class="fas fa-satellite-dish me-2"></i>Live snapshot</span>
+        <span class="badge rounded-pill bg-secondary" id="liveBadge">Idle</span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="stat-card text-center h-100">
+              <div class="stat-label">pH</div>
+              <div class="stat-value" id="livePh">—</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-card text-center h-100">
+              <div class="stat-label">TDS</div>
+              <div class="stat-value" id="liveTds">—</div>
+              <div class="small text-muted">ppm</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-card text-center h-100">
+              <div class="stat-label">Turbidity</div>
+              <div class="stat-value" id="liveTurbidity">—</div>
+              <div class="small text-muted">NTU</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-card text-center h-100">
+              <div class="stat-label">Flow Rate</div>
+              <div class="stat-value" id="liveFlowRate">—</div>
+              <div class="small text-muted">L/min</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-card text-center h-100">
+              <div class="stat-label">Water Level</div>
+              <div class="stat-value" id="liveWaterLevel">—</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-card text-center h-100">
+              <div class="stat-label">Pump</div>
+              <div class="stat-value" id="livePumpStatus">—</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-card text-center h-100">
+              <div class="stat-label">Battery</div>
+              <div class="stat-value" id="liveBatteryPercent">--</div>
+              <div class="small text-muted" id="liveBatteryVoltage">-- V</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-card text-center h-100">
+              <div class="stat-label">System Status</div>
+              <div class="stat-value" id="liveSystemStatus">--</div>
+              <div class="small text-muted" id="liveWarningLevel">Water: --</div>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-danger py-2 mt-3 mb-0 d-none" id="liveWaterAlert" role="alert"></div>
+        <div class="small text-muted mt-3" id="liveMeta">Waiting for Firebase data…</div>
+        <pre id="liveSnapshot" class="mb-0 p-3 rounded small" style="background:#f7fbfd;border:1px solid var(--border-color);max-height:280px;overflow:auto;">Waiting for data…</pre>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card card-aqua h-100">
+      <div class="card-header">
+        <span><i class="fas fa-microchip me-2"></i>Devices</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-aqua mb-0">
+            <thead><tr><th>Name</th><th>Status</th><th>Last seen</th></tr></thead>
+            <tbody>
+              {% for d in devices %}
+              <tr>
+                <td class="fw-semibold">{{ d.name }}</td>
+                <td>
+                  {% if d.status == 'ONLINE' %}<span class="badge badge-normal rounded-pill">Online</span>
+                  {% elif d.status == 'ERROR' %}<span class="badge badge-critical rounded-pill">Error</span>
+                  {% else %}<span class="badge bg-secondary rounded-pill">{{ d.get_status_display }}</span>{% endif %}
+                </td>
+                <td class="small text-muted">{% if d.last_seen %}{{ d.last_seen|timesince }} ago{% else %}—{% endif %}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="3" class="text-center text-muted py-4">No devices</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card card-aqua">
+  <div class="card-header">
+    <span><i class="fas fa-stream me-2"></i>Recent data</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-aqua mb-0">
+        <thead><tr><th>Type</th><th>Source</th><th>When</th></tr></thead>
+        <tbody>
+          {% for r in recent_cache %}
+          <tr>
+            <td class="fw-semibold small">{{ r.reading_type }}</td>
+            <td class="small">{{ r.source }}</td>
+            <td class="small text-muted">{{ r.received_at|timesince }} ago</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="text-center text-muted py-4">No data yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.IP_AQUA_FIREBASE_CONFIG = {{ firebase_web_config_json|safe }};
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
+<script src="{% static 'js/firebase-init.js' %}"></script>
+<script src="{% static 'js/firebase-live.js' %}"></script>
+{% endblock %}

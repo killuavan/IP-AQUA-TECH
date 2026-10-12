@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Water Quality{% endblock %}
+{% block page_title %}Water Quality Monitoring{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <form method="get" class="d-flex gap-2 flex-wrap">
+    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search notes..." style="width:200px;">
+    <select name="warning_level" class="form-select" style="width:210px;">
+      <option value="">All Warning Levels</option>
+      {% for value, label in warning_choices.choices %}
+      <option value="{{ value }}" {% if warning_level == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-aqua"><i class="fas fa-search"></i></button>
+  </form>
+  <a href="{% url 'monitoring:water_quality_create' %}" class="btn btn-aqua"><i class="fas fa-plus me-1"></i>Add Reading</a>
+</div>
+<div class="card card-aqua">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-aqua table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Date/Time</th>
+            <th>pH</th>
+            <th>TDS</th>
+            <th>Turbidity</th>
+            <th>Temp</th>
+            <th>Flow</th>
+            <th>Pressure</th>
+            <th>Level</th>
+            <th>Warning Level</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for obj in page_obj %}
+          <tr class="{% if obj.status == 'CRITICAL' %}row-critical{% elif obj.status == 'WARNING' %}row-warning{% endif %}">
+            <td>{{ obj.recorded_at|date:"M d, Y H:i" }}</td>
+            <td>{{ obj.ph }}</td>
+            <td>{{ obj.tds }} ppm</td>
+            <td>{{ obj.turbidity }} NTU</td>
+            <td>{{ obj.temperature }}°C</td>
+            <td>{{ obj.flow_rate }} L/min</td>
+            <td>{{ obj.water_pressure }} bar</td>
+            <td>{{ obj.water_level }}%</td>
+            <td>
+              {% if obj.warning_level == 'NORMAL' %}<span class="badge badge-normal">Normal</span>
+              {% elif obj.warning_level == 'FIRST' %}<span class="badge bg-info">First Level</span>
+              {% elif obj.warning_level == 'MIDDLE' %}<span class="badge badge-warning">Middle Level</span>
+              {% else %}<span class="badge badge-critical">Danger Level</span>{% endif %}
+            </td>
+            <td class="text-nowrap">
+              <a href="{% url 'monitoring:water_quality_detail' obj.pk %}" class="btn btn-sm btn-outline-info"><i class="fas fa-eye"></i></a>
+              <a href="{% url 'monitoring:water_quality_edit' obj.pk %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+              <form method="post" action="{% url 'monitoring:water_quality_delete' obj.pk %}" class="d-inline" onsubmit="return confirm('Delete this reading?');">{% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="10" class="text-center text-muted py-4">No readings found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% include 'includes/pagination.html' %}
+{% endblock %}

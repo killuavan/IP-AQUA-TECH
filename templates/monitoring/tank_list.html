@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Water Tanks{% endblock %}
+{% block page_title %}Water Tank Monitoring{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-end mb-3">
+  <a href="{% url 'monitoring:tank_create' %}" class="btn btn-aqua"><i class="fas fa-plus me-1"></i>Add Tank</a>
+</div>
+<div class="row g-3">
+  {% for tank in tanks %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card card-aqua h-100">
+      <div class="card-header">
+        <span><i class="fas fa-database me-2"></i>{{ tank.name }}</span>
+        {% if tank.status == 'NORMAL' %}<span class="badge badge-normal">Normal</span>
+        {% elif tank.status == 'LOW' %}<span class="badge badge-warning">Low</span>
+        {% elif tank.status == 'EMPTY' %}<span class="badge badge-critical">Empty</span>
+        {% else %}<span class="badge bg-info">Full</span>{% endif %}
+      </div>
+      <div class="card-body">
+        <div class="stat-value mb-2">{{ tank.current_level_percent }}%</div>
+        <div class="progress progress-aqua mb-3" style="height:12px;">
+          <div class="progress-bar {% if tank.current_level_percent <= 20 %}bg-danger{% elif tank.current_level_percent >= 95 %}bg-info{% else %}bg-success{% endif %}" style="width:{{ tank.current_level_percent }}%"></div>
+        </div>
+        <p class="mb-1 small text-muted">Volume: <strong>{{ tank.current_volume_liters }} L</strong> / {{ tank.capacity_liters }} L</p>
+        {% if tank.location %}<p class="mb-1 small text-muted"><i class="fas fa-map-marker-alt me-1"></i>{{ tank.location }}</p>{% endif %}
+        <p class="mb-0 small text-muted">Updated: {{ tank.last_updated|timesince }} ago</p>
+        <a href="{% url 'monitoring:tank_edit' tank.pk %}" class="btn btn-sm btn-aqua mt-3"><i class="fas fa-edit me-1"></i>Update</a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12"><div class="empty-state"><i class="fas fa-database"></i><p>No tanks configured.</p></div></div>
+  {% endfor %}
+</div>
+{% endblock %}

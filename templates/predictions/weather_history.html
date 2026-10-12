@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Weather Log{% endblock %}
+{% block page_title %}Weather Snapshots{% endblock %}
+{% block content %}
+
+<div class="mb-3">
+  <a href="{% url 'predictions:dashboard' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="fas fa-arrow-left me-1"></i>Back
+  </a>
+</div>
+
+<div class="card card-aqua">
+  <div class="card-header"><i class="fas fa-cloud me-2"></i>Fetched Weather</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Fetched</th>
+            <th>Source</th>
+            <th>Location</th>
+            <th>Rain 24h past</th>
+            <th>Rain 24h next</th>
+            <th>Prob %</th>
+            <th>Will rain</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for w in snapshots %}
+          <tr>
+            <td class="small">{{ w.fetched_at }}</td>
+            <td><code>{{ w.source }}</code></td>
+            <td class="small">{{ w.location_name }}</td>
+            <td>{{ w.rain_last_24h_mm }} mm</td>
+            <td>{{ w.rain_next_24h_mm }} mm</td>
+            <td>{{ w.rain_probability_max_pct }}</td>
+            <td>{% if w.will_rain_next_24h %}<span class="text-primary">Yes</span>{% else %}No{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No weather snapshots yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer">
+    {% include 'includes/pagination.html' %}
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Maintenance{% endblock %}
+{% block page_title %}Maintenance Management{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <form method="get" class="d-flex gap-2 flex-wrap">
+    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search..." style="width:200px;">
+    <select name="status" class="form-select" style="width:160px;">
+      <option value="">All Status</option>
+      {% for value, label in status_choices.choices %}
+      <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-aqua"><i class="fas fa-search"></i></button>
+  </form>
+  <a href="{% url 'maintenance:maintenance_create' %}" class="btn btn-aqua"><i class="fas fa-plus me-1"></i>Schedule Task</a>
+</div>
+<div class="card card-aqua">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-aqua table-hover mb-0">
+        <thead>
+          <tr><th>Title</th><th>Type</th><th>Priority</th><th>Status</th><th>Scheduled</th><th>Technician</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for obj in page_obj %}
+          <tr class="{% if obj.status == 'OVERDUE' %}row-critical{% elif obj.priority == 'URGENT' %}row-warning{% endif %}">
+            <td><a href="{% url 'maintenance:maintenance_detail' obj.pk %}" class="text-decoration-none fw-semibold text-aqua">{{ obj.title }}</a></td>
+            <td>{{ obj.get_maintenance_type_display }}</td>
+            <td>
+              {% if obj.priority == 'URGENT' %}<span class="badge badge-critical">Urgent</span>
+              {% elif obj.priority == 'HIGH' %}<span class="badge badge-warning">High</span>
+              {% else %}<span class="badge bg-secondary">{{ obj.get_priority_display }}</span>{% endif %}
+            </td>
+            <td>
+              {% if obj.status == 'COMPLETED' %}<span class="badge badge-normal">Completed</span>
+              {% elif obj.status == 'OVERDUE' %}<span class="badge badge-critical">Overdue</span>
+              {% elif obj.status == 'IN_PROGRESS' %}<span class="badge badge-warning">In Progress</span>
+              {% else %}<span class="badge bg-info">{{ obj.get_status_display }}</span>{% endif %}
+            </td>
+            <td>{{ obj.scheduled_date|date:"M d, Y" }}</td>
+            <td>{{ obj.assigned_technician|default:"—" }}</td>
+            <td class="text-nowrap">
+              <a href="{% url 'maintenance:maintenance_edit' obj.pk %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+              {% if obj.status != 'COMPLETED' %}
+              <form method="post" action="{% url 'maintenance:maintenance_complete' obj.pk %}" class="d-inline">{% csrf_token %}
+                <button class="btn btn-sm btn-outline-success" title="Complete"><i class="fas fa-check"></i></button>
+              </form>
+              {% endif %}
+              <form method="post" action="{% url 'maintenance:maintenance_delete' obj.pk %}" class="d-inline" onsubmit="return confirm('Delete?');">{% csrf_token %}
+                <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No maintenance tasks.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% include 'includes/pagination.html' %}
+{% endblock %}

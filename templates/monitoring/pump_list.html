@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Pumps{% endblock %}
+{% block page_title %}Pump & UV Monitoring{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-end mb-3">
+  <a href="{% url 'monitoring:pump_create' %}" class="btn btn-aqua"><i class="fas fa-plus me-1"></i>Add Pump</a>
+</div>
+<div class="row g-3">
+  {% for pump in pumps %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card card-aqua h-100">
+      <div class="card-header"><i class="fas fa-cogs me-2"></i>{{ pump.name }}</div>
+      <div class="card-body">
+        <div class="mb-2">Pump: 
+          {% if pump.pump_status == 'ON' %}<span class="badge badge-normal">On</span>
+          {% elif pump.pump_status == 'MALFUNCTION' %}<span class="badge badge-critical">Malfunction</span>
+          {% else %}<span class="badge bg-secondary">{{ pump.get_pump_status_display }}</span>{% endif %}
+        </div>
+        <div class="mb-2">UV Sterilizer: 
+          {% if pump.uv_sterilizer_status == 'ON' %}<span class="badge badge-normal">On</span>
+          {% else %}<span class="badge bg-secondary">{{ pump.get_uv_sterilizer_status_display }}</span>{% endif %}
+        </div>
+        <div class="mb-2">Flow: <span class="badge bg-secondary">{{ pump.get_flow_status_display }}</span></div>
+        <p class="mb-1 small">Pressure: <strong>{{ pump.system_pressure }} bar</strong></p>
+        <p class="mb-1 small">Power: <strong>{{ pump.power_consumption }} W</strong></p>
+        <p class="mb-1 small">Runtime: <strong>{{ pump.runtime_hours }} hrs</strong></p>
+        <a href="{% url 'monitoring:pump_edit' pump.pk %}" class="btn btn-sm btn-aqua mt-2"><i class="fas fa-edit me-1"></i>Update</a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12"><div class="empty-state"><i class="fas fa-cogs"></i><p>No pumps configured.</p></div></div>
+  {% endfor %}
+</div>
+{% endblock %}

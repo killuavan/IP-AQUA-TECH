@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}{{ report.title }}{% endblock %}
+{% block page_title %}Report Detail{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card card-aqua">
+      <div class="card-header"><i class="fas fa-file-alt me-2"></i>{{ report.title }}</div>
+      <div class="card-body">
+        <dl class="row">
+          <dt class="col-sm-4">Type</dt><dd class="col-sm-8">{{ report.get_report_type_display }}</dd>
+          <dt class="col-sm-4">Format</dt><dd class="col-sm-8">{{ report.get_report_format_display }}</dd>
+          <dt class="col-sm-4">Period</dt><dd class="col-sm-8">{{ report.start_date }} – {{ report.end_date }}</dd>
+          <dt class="col-sm-4">Generated</dt><dd class="col-sm-8">{{ report.created_at|date:"M d, Y H:i" }}</dd>
+          <dt class="col-sm-4">By</dt><dd class="col-sm-8">{{ report.generated_by|default:"—" }}</dd>
+          <dt class="col-sm-4">Summary</dt><dd class="col-sm-8">{{ report.summary|default:"—" }}</dd>
+        </dl>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="{% url 'reports:report_download_pdf' report.pk %}" class="btn btn-danger"><i class="fas fa-file-pdf me-1"></i>Download PDF</a>
+          <a href="{% url 'reports:report_download_excel' report.pk %}" class="btn btn-success"><i class="fas fa-file-excel me-1"></i>Download Excel</a>
+          <a href="{% url 'reports:report_list' %}" class="btn btn-outline-secondary">Back to List</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

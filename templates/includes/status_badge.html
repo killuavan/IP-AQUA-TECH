@@ -1,0 +1,9 @@
+{% if status == 'NORMAL' or status == 'OPERATIONAL' or status == 'GOOD' or status == 'EXCELLENT' or status == 'UP_TO_DATE' or status == 'COMPLETED' or status == 'ON' or status == 'FULL' and not tank %}
+<span class="badge badge-normal"><span class="status-dot normal"></span>{{ label|default:status }}</span>
+{% elif status == 'WARNING' or status == 'DEGRADED' or status == 'FAIR' or status == 'DUE_SOON' or status == 'LOW' or status == 'IN_PROGRESS' or status == 'SCHEDULED' %}
+<span class="badge badge-warning"><span class="status-dot warning"></span>{{ label|default:status }}</span>
+{% elif status == 'CRITICAL' or status == 'OFFLINE' or status == 'POOR' or status == 'REPLACE' or status == 'OVERDUE' or status == 'MALFUNCTION' or status == 'EMPTY' or status == 'CANCELLED' %}
+<span class="badge badge-critical"><span class="status-dot critical"></span>{{ label|default:status }}</span>
+{% else %}
+<span class="badge bg-secondary">{{ label|default:status }}</span>
+{% endif %}

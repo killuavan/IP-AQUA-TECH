@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Solar Power{% endblock %}
+{% block page_title %}Solar Power Monitoring{% endblock %}
+{% block content %}
+{% if latest %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="stat-card text-center"><div class="stat-label">Voltage</div><div class="stat-value">{{ latest.panel_voltage }} V</div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card text-center"><div class="stat-label">Current</div><div class="stat-value">{{ latest.panel_current }} A</div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card text-center"><div class="stat-label">Power Output</div><div class="stat-value">{{ latest.power_output }} W</div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card text-center"><div class="stat-label">Consumption</div><div class="stat-value">{{ latest.power_consumption }} W</div></div></div>
+</div>
+{% endif %}
+<div class="d-flex justify-content-between mb-3">
+  <div>
+    <a href="{% url 'solar:energy_log_list' %}" class="btn btn-aqua-outline btn-sm"><i class="fas fa-calendar me-1"></i>Energy Logs</a>
+    <a href="{% url 'solar:battery_list' %}" class="btn btn-aqua-outline btn-sm"><i class="fas fa-battery-full me-1"></i>Batteries</a>
+  </div>
+  <a href="{% url 'solar:solar_create' %}" class="btn btn-aqua"><i class="fas fa-plus me-1"></i>Add Reading</a>
+</div>
+<div class="card card-aqua">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-aqua table-hover mb-0">
+        <thead><tr><th>Date/Time</th><th>Voltage</th><th>Current</th><th>Power</th><th>Consumption</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for obj in page_obj %}
+          <tr class="{% if obj.status == 'CRITICAL' or obj.status == 'OFFLINE' %}row-critical{% elif obj.status == 'WARNING' %}row-warning{% endif %}">
+            <td>{{ obj.recorded_at|date:"M d, Y H:i" }}</td>
+            <td>{{ obj.panel_voltage }} V</td>
+            <td>{{ obj.panel_current }} A</td>
+            <td>{{ obj.power_output }} W</td>
+            <td>{{ obj.power_consumption }} W</td>
+            <td>
+              {% if obj.status == 'NORMAL' %}<span class="badge badge-normal">Normal</span>
+              {% elif obj.status == 'WARNING' %}<span class="badge badge-warning">Warning</span>
+              {% else %}<span class="badge badge-critical">{{ obj.get_status_display }}</span>{% endif %}
+            </td>
+            <td>
+              <a href="{% url 'solar:solar_edit' obj.pk %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+              <form method="post" action="{% url 'solar:solar_delete' obj.pk %}" class="d-inline" onsubmit="return confirm('Delete?');">{% csrf_token %}
+                <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No solar readings.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% include 'includes/pagination.html' %}
+{% endblock %}

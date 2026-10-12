@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block title %}Predict{% endblock %}
+{% block page_title %}Predict Next Month{% endblock %}
+{% block content %}
+
+<div class="card card-aqua mb-4">
+  <div class="card-body py-3">
+    <div class="row align-items-center g-3">
+      <div class="col-lg-7">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+          {% if auto_predict_enabled %}<span class="badge rounded-pill bg-success">Auto ON</span>{% endif %}
+          {% if monthly_ml_trained %}<span class="badge rounded-pill" style="background:#e8f6f9;color:var(--aqua-primary);">ML ready</span>{% endif %}
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <span class="text-muted">{{ predict_target.current_month_label }}</span>
+          <i class="fas fa-arrow-right text-muted small"></i>
+          <strong style="color:var(--aqua-primary);font-size:1.15rem;">{{ predict_target.month_label }}</strong>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="d-flex flex-wrap justify-content-lg-end gap-2">
+          <form method="post" action="{% url 'predictions:run_monthly' %}">{% csrf_token %}
+            <button class="btn btn-primary" type="submit"><i class="fas fa-cloud-rain me-1"></i>Predict</button>
+          </form>
+          <a href="{% url 'predictions:monthly_history' %}" class="btn btn-outline-secondary">History</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if latest_monthly %}
+{% with m=latest_monthly %}
+
+<h2 class="section-title"><i class="fas fa-brain"></i> Results <span class="section-line"></span></h2>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon {% if m.rain_level == 'WET' %}bg-blue{% elif m.rain_level == 'DRY' %}bg-orange{% else %}bg-aqua{% endif %}">
+          <i class="fas fa-cloud-sun-rain"></i>
+        </div>
+        <div>
+          <div class="stat-label">Rain level</div>
+          <div class="stat-value" style="font-size:1.1rem;">{{ m.rain_level }}</div>
+          <div class="stat-sub">{{ m.month_label }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon bg-aqua"><i class="fas fa-tint"></i></div>
+        <div>
+          <div class="stat-label">Rain</div>
+          <div class="stat-value" style="font-size:1.1rem;">{{ m.predicted_total_mm|floatformat:0 }} mm</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon bg-blue"><i class="fas fa-calendar-day"></i></div>
+        <div>
+          <div class="stat-label">Rainy days</div>
+          <div class="stat-value" style="font-size:1.1rem;">~{{ m.predicted_rainy_days }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon {% if m.spring_dirt_probability_pct >= 55 %}bg-red{% elif m.spring_dirt_probability_pct >= 35 %}bg-yellow{% else %}bg-green{% endif %}">
+          <i class="fas fa-water"></i>
+        </div>
+        <div>
+          <div class="stat-label">Cloudy if rains</div>
+          <div class="stat-value" style="font-size:1.1rem;">~{{ m.spring_dirt_probability_pct|floatformat:0 }}%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card card-aqua mb-4">
+  <div class="card-header"><span><i class="fas fa-info-circle me-2"></i>Summary</span></div>
+  <div class="card-body">
+    <p class="fw-semibold mb-2" style="color:var(--aqua-primary);">{{ m.summary }}</p>
+    <ul class="small text-muted mb-0">
+      {% for tip in m.recommendations %}<li>{{ tip }}</li>{% endfor %}
+    </ul>
+  </div>
+</div>
+
+{% endwith %}
+{% else %}
+<div class="card card-aqua mb-4">
+  <div class="card-body text-center py-5 text-muted">
+    No forecast yet. Click <strong>Predict</strong> (or wait for auto-predict).
+  </div>
+</div>
+{% endif %}
+
+<div class="card card-aqua">
+  <div class="card-header">
+    <span><i class="fas fa-list me-2"></i>Recent</span>
+    <a href="{% url 'predictions:monthly_history' %}" class="btn btn-sm btn-outline-secondary">All</a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-aqua mb-0">
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Month</th>
+            <th>Rain</th>
+            <th>mm</th>
+            <th>Cloudy</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in recent_monthly %}
+          <tr>
+            <td class="small text-muted">{{ row.created_at|date:"M d H:i" }}</td>
+            <td>{{ row.month_label }}</td>
+            <td><span class="badge rounded-pill bg-primary">{{ row.rain_level }}</span></td>
+            <td>{{ row.predicted_total_mm|floatformat:0 }}</td>
+            <td>~{{ row.spring_dirt_probability_pct|floatformat:0 }}%</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-4">No data</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

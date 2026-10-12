@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Adjustable Thresholds{% endblock %}
+{% block page_title %}Adjustable Thresholds{% endblock %}
+{% block content %}
+<div class="alert alert-info">
+  Changes apply to new sensor readings and are synchronized to Firebase for the ESP32.
+  Values between Normal and Danger are divided into First and Middle warning levels.
+</div>
+<form method="post" class="card card-aqua">
+  {% csrf_token %}
+  <div class="card-header"><span><i class="fas fa-gauge-high me-2"></i>Monitoring limits</span></div>
+  <div class="card-body">
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="row g-3">
+      {% for field in form %}
+      <div class="col-md-6 col-xl-4">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="text-danger small">{{ field.errors|join:', ' }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card-footer text-end">
+    <button class="btn btn-primary" type="submit"><i class="fas fa-save me-1"></i>Save thresholds</button>
+  </div>
+</form>
+{% endblock %}

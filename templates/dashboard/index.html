@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block body_attrs %}data-chart-url="{% url 'dashboard:chart_data' %}" data-water-range-start="{{ chart_from_iso }}" data-water-range-end="{{ chart_to_iso }}"{% endblock %}
+{% block content %}
+
+<div class="alert {% if overall_status == 'OPERATIONAL' %}alert-success{% elif overall_status == 'DEGRADED' %}alert-warning{% else %}alert-danger{% endif %} alert-aqua d-flex align-items-center mb-4" role="alert">
+  <i class="fas {% if overall_status == 'OPERATIONAL' %}fa-check-circle{% elif overall_status == 'DEGRADED' %}fa-exclamation-triangle{% else %}fa-times-circle{% endif %} fa-lg me-3"></i>
+  <div>
+    <strong>System: {{ overall_status }}</strong>
+    <div class="small">{{ system.location|default:"Main Site" }} · {% now "M d, Y H:i" %}</div>
+  </div>
+</div>
+
+{% if weather %}
+<h2 class="section-title"><i class="fas fa-cloud-sun-rain"></i> Weather <span class="section-line"></span></h2>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon bg-aqua">
+          {% if weather.will_rain_next_24h %}<i class="fas fa-cloud-rain"></i>{% else %}<i class="fas fa-sun"></i>{% endif %}
+        </div>
+        <div>
+          <div class="stat-label">Temperature</div>
+          <div class="stat-value" style="font-size:1.1rem;">
+            {% if weather.temperature_c != None %}{{ weather.temperature_c|floatformat:1 }}°C{% else %}—{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon bg-blue"><i class="fas fa-droplet"></i></div>
+        <div>
+          <div class="stat-label">Humidity</div>
+          <div class="stat-value" style="font-size:1.1rem;">
+            {% if weather.humidity_pct != None %}{{ weather.humidity_pct|floatformat:0 }}%{% else %}—{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon {% if weather.will_rain_next_24h %}bg-blue{% else %}bg-green{% endif %}">
+          <i class="fas fa-cloud-showers-heavy"></i>
+        </div>
+        <div>
+          <div class="stat-label">Rain next 24h</div>
+          <div class="stat-value" style="font-size:1.1rem;">
+            {% if weather.will_rain_next_24h %}YES{% else %}NO{% endif %}
+          </div>
+          <div class="stat-sub">{{ weather.rain_next_24h_mm|floatformat:1 }} mm</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon bg-orange"><i class="fas fa-percent"></i></div>
+        <div>
+          <div class="stat-label">Rain chance</div>
+          <div class="stat-value" style="font-size:1.1rem;">{{ weather.rain_probability_max_pct|floatformat:0 }}%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% elif weather_error %}
+<div class="alert alert-warning mb-4" role="alert">
+  <i class="fas fa-cloud-exclamation me-2"></i>
+  Live weather is currently unavailable. No demo values are being shown.
+</div>
+{% endif %}
+
+<h2 class="section-title"><i class="fas fa-gauge-high"></i> System overview <span class="section-line"></span></h2>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon {% if latest_wq.status == 'CRITICAL' %}bg-red{% elif latest_wq.status == 'WARNING' %}bg-yellow{% else %}bg-green{% endif %}"><i class="fas fa-flask"></i></div>
+        <div>
+          <div class="stat-label">Water Quality</div>
+          <div class="stat-value" style="font-size:1.1rem;">{{ latest_wq.get_status_display|default:"N/A" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon bg-purple"><i class="fas fa-tint"></i></div>
+        <div>
+          <div class="stat-label">Today</div>
+          <div class="stat-value" style="font-size:1.1rem;">{{ production_today.daily_production_liters|floatformat:1|default:"0" }} L</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon {% if alert_count %}bg-red{% else %}bg-green{% endif %}"><i class="fas fa-bell"></i></div>
+        <div>
+          <div class="stat-label">Alerts</div>
+          <div class="stat-value" style="font-size:1.1rem;">{{ alert_count }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon bg-yellow"><i class="fas fa-tools"></i></div>
+        <div>
+          <div class="stat-label">Maintenance</div>
+          <div class="stat-value" style="font-size:1.1rem;">{{ pending_maintenance }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2 class="section-title">
+  <i class="fas fa-microchip"></i> Sensor readings
+  <span class="section-line"></span>
+  {% if selected_wq %}
+  <small class="text-muted fw-normal ms-2" style="font-size:0.7rem;">
+    Reading time <span id="dashboardUpdated" data-reading-timestamp="{{ selected_wq.recorded_at|date:'c' }}">{{ selected_wq.recorded_at|date:"M d, Y H:i" }}</span>
+  </small>
+  {% else %}
+  <small class="text-muted fw-normal ms-2" style="font-size:0.7rem;"><span id="dashboardUpdated" data-reading-timestamp="">No reading in selected range</span></small>
+  {% endif %}
+</h2>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon {% if not selected_wq %}bg-aqua{% elif selected_wq.ph < 6 or selected_wq.ph > 9 %}bg-red{% elif selected_wq.ph < 6.5 or selected_wq.ph > 8.5 %}bg-yellow{% else %}bg-green{% endif %}">
+          <i class="fas fa-vial"></i>
+        </div>
+        <div>
+          <div class="stat-label">pH Level</div>
+          <div class="stat-value" style="font-size:1.25rem;">
+            <span id="dashboardPh">{% if selected_wq %}{{ selected_wq.ph|floatformat:2 }}{% else %}&mdash;{% endif %}</span>
+          </div>
+          <div class="stat-sub">Normal: {{ monitoring_thresholds.ph.min_normal|floatformat:1 }}&ndash;{{ monitoring_thresholds.ph.max_normal|floatformat:1 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon {% if not selected_wq %}bg-aqua{% elif selected_wq.tds <= 0 or selected_wq.tds > 500 %}bg-red{% elif selected_wq.tds > 300 %}bg-yellow{% else %}bg-green{% endif %}">
+          <i class="fas fa-water"></i>
+        </div>
+        <div>
+          <div class="stat-label">TDS</div>
+          <div class="stat-value" style="font-size:1.25rem;">
+            <span id="dashboardTds">{% if selected_wq %}{{ selected_wq.tds|floatformat:0 }}{% else %}&mdash;{% endif %}</span> <small>ppm</small>
+          </div>
+          <div class="stat-sub">{% if selected_wq and selected_wq.tds <= 0 %}No sensor signal{% else %}Normal: up to {{ monitoring_thresholds.tds.max_normal|floatformat:0 }} ppm{% endif %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon {% if not selected_wq %}bg-aqua{% elif selected_wq.turbidity > 5 %}bg-red{% elif selected_wq.turbidity > 1 %}bg-yellow{% else %}bg-green{% endif %}">
+          <i class="fas fa-droplet"></i>
+        </div>
+        <div>
+          <div class="stat-label">Turbidity</div>
+          <div class="stat-value" style="font-size:1.25rem;">
+            <span id="dashboardTurbidity">{% if selected_wq %}{{ selected_wq.turbidity|floatformat:2 }}{% else %}&mdash;{% endif %}</span> <small>NTU</small>
+          </div>
+          <div class="stat-sub">Normal: up to {{ monitoring_thresholds.turbidity.max_normal|floatformat:1 }} NTU</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon {% if not latest_solar or latest_solar.panel_voltage <= 0 %}bg-red{% else %}bg-green{% endif %}">
+          <i class="fas fa-battery-three-quarters"></i>
+        </div>
+        <div>
+          <div class="stat-label">Battery</div>
+          <div class="stat-value" style="font-size:1.25rem;">
+            <span id="dashboardVoltage">{% if latest_solar %}{{ latest_solar.panel_voltage|floatformat:2 }}{% else %}&mdash;{% endif %}</span> V
+          </div>
+          <div class="stat-sub">{% if latest_solar and latest_solar.panel_voltage <= 0 %}No battery signal{% else %}Live battery voltage{% endif %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2 class="section-title"><i class="fas fa-droplet"></i> Production <span class="section-line"></span></h2>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card stat-center">
+      <div class="stat-label">LOW</div>
+      <div class="stat-value {% if day_level == 'LOW' %}text-danger{% else %}text-muted{% endif %}">{% if day_level == 'LOW' %}ACTIVE{% else %}-{% endif %}</div>
+      <div class="stat-sub">Below {{ production_mid|floatformat:0 }} L/day</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card stat-center">
+      <div class="stat-label">MID</div>
+      <div class="stat-value {% if day_level == 'MID' %}text-warning{% else %}text-muted{% endif %}">{% if day_level == 'MID' %}ACTIVE{% else %}-{% endif %}</div>
+      <div class="stat-sub">{{ production_mid|floatformat:0 }}-{{ production_high|floatformat:0 }} L/day</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card stat-center">
+      <div class="stat-label">HIGH</div>
+      <div class="stat-value {% if day_level == 'HIGH' %}text-success{% else %}text-muted{% endif %}">{% if day_level == 'HIGH' %}ACTIVE{% else %}-{% endif %}</div>
+      <div class="stat-sub">{{ production_high|floatformat:0 }}+ L/day</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card stat-center">
+      <div class="stat-label">Today</div>
+      <div class="stat-value">{{ day_prod|floatformat:1 }}</div>
+      <div class="stat-sub">liters</div>
+    </div>
+  </div>
+</div>
+
+<h2 class="section-title"><i class="fas fa-chart-line"></i> Charts <span class="section-line"></span></h2>
+<form method="get" class="row g-2 align-items-end mb-3" id="dashboardDateFilter">
+  <div class="col-sm-5 col-lg-4">
+    <label for="dashboardFrom" class="form-label">From date and time</label>
+    <input type="datetime-local" id="dashboardFrom" name="from_datetime" class="form-control" value="{{ chart_from }}" required>
+  </div>
+  <div class="col-sm-5 col-lg-4">
+    <label for="dashboardTo" class="form-label">To date and time</label>
+    <input type="datetime-local" id="dashboardTo" name="to_datetime" class="form-control" value="{{ chart_to }}" required>
+  </div>
+  <div class="col-sm-2">
+    <button type="submit" class="btn btn-aqua w-100"><i class="fas fa-filter me-1"></i>Apply</button>
+  </div>
+</form>
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="card card-aqua h-100">
+      <div class="card-header"><span><i class="fas fa-chart-bar me-2"></i>Water Production</span></div>
+      <div class="card-body"><div class="chart-container"><canvas id="chartProduction"></canvas></div></div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card card-aqua h-100">
+      <div class="card-header"><span><i class="fas fa-battery-full me-2"></i>Battery</span></div>
+      <div class="card-body"><div class="chart-container"><canvas id="chartBattery"></canvas></div></div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card card-aqua h-100">
+      <div class="card-header"><span><i class="fas fa-flask me-2"></i>Water Quality</span></div>
+      <div class="card-body"><div class="chart-container"><canvas id="chartWaterQuality"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card card-aqua mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="fas fa-table-list me-2"></i>Water Quality History</span>
+    <small class="text-muted" id="dashboardHistoryCount">Loading readings...</small>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-aqua table-hover mb-0">
+        <thead><tr><th>Date/Time</th><th>pH</th><th>TDS</th><th>Turbidity</th><th>Temperature</th><th>Status</th></tr></thead>
+        <tbody id="dashboardHistoryRows">
+          <tr><td colspan="6" class="text-center text-muted py-3">Loading readings...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card card-aqua h-100">
+      <div class="card-header">
+        <span><i class="fas fa-bell me-2"></i>Alerts</span>
+        <a href="{% url 'notifications:notification_list' %}" class="btn btn-sm btn-outline-secondary">View all</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-aqua mb-0">
+            <thead><tr><th>Alert</th><th>Severity</th><th>Time</th></tr></thead>
+            <tbody>
+              {% for alert in active_alerts %}
+              <tr>
+                <td>{{ alert.title }}</td>
+                <td>
+                  {% if alert.severity == 'CRITICAL' %}<span class="badge badge-critical">Critical</span>
+                  {% elif alert.severity == 'WARNING' %}<span class="badge badge-warning">Warning</span>
+                  {% else %}<span class="badge bg-info text-dark">Info</span>{% endif %}
+                </td>
+                <td class="small text-muted">{{ alert.created_at|timesince }} ago</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="3" class="text-center text-muted py-4">No active alerts</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard-live.js' %}"></script>
+{% endblock %}

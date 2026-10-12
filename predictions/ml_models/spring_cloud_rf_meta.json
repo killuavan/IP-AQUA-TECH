@@ -1,0 +1,35 @@
+{
+  "algorithm": "RandomForestClassifier",
+  "target": "Chance (%) spring water becomes cloudy when it rains (0/1 \u2192 proba%)",
+  "n_samples": 1500,
+  "n_train": 1200,
+  "n_test": 300,
+  "accuracy": 0.92,
+  "f1": 0.929,
+  "roc_auc": 0.9539,
+  "feature_names": [
+    "total_mm",
+    "rainy_days",
+    "rain_level_code",
+    "month",
+    "month_sin",
+    "month_cos",
+    "climate_normal_mm",
+    "wet_prob",
+    "dry_prob"
+  ],
+  "feature_importances": {
+    "total_mm": 0.3312018062255288,
+    "rainy_days": 0.07621931348922113,
+    "rain_level_code": 0.15753819130038807,
+    "month": 0.009422693396530887,
+    "month_sin": 0.010147345557010391,
+    "month_cos": 0.014784914581892978,
+    "climate_normal_mm": 0.05181037737488385,
+    "wet_prob": 0.12771713455272848,
+    "dry_prob": 0.22115822352181527
+  },
+  "dataset": "synthetic rain-to-cloudy (domain: more rain \u2192 higher cloudy chance)",
+  "description": "Maps monthly rain features to probability that spring water becomes cloudy when it rains. High-accuracy ensemble trained on domain data.",
+  "model_file": "spring_cloud_rf.joblib"
+}

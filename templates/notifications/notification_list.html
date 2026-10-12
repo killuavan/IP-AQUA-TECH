@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Alerts{% endblock %}
+{% block page_title %}Alerts & Notifications{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <form method="get" class="d-flex gap-2 flex-wrap">
+    <select name="show" class="form-select" style="width:140px;">
+      <option value="active" {% if show == 'active' %}selected{% endif %}>Active</option>
+      <option value="resolved" {% if show == 'resolved' %}selected{% endif %}>Resolved</option>
+      <option value="all" {% if show == 'all' %}selected{% endif %}>All</option>
+    </select>
+    <select name="severity" class="form-select" style="width:140px;">
+      <option value="">All Severity</option>
+      {% for value, label in severity_choices.choices %}
+      <option value="{{ value }}" {% if severity == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="type" class="form-select" style="width:160px;">
+      <option value="">All Types</option>
+      {% for value, label in type_choices.choices %}
+      <option value="{{ value }}" {% if alert_type == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-aqua"><i class="fas fa-filter"></i></button>
+  </form>
+  <div class="d-flex gap-2">
+    <form method="post" action="{% url 'notifications:notification_mark_all_read' %}">{% csrf_token %}
+      <button class="btn btn-aqua-outline btn-sm">Mark All Read</button>
+    </form>
+    {% if user.is_admin_user or user.is_superuser %}
+    <a href="{% url 'notifications:notification_create' %}" class="btn btn-aqua btn-sm"><i class="fas fa-plus me-1"></i>Create Alert</a>
+    {% endif %}
+  </div>
+</div>
+<div class="card card-aqua">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-aqua table-hover mb-0">
+        <thead>
+          <tr><th></th><th>Title</th><th>Type</th><th>Severity</th><th>Time</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for n in page_obj %}
+          <tr class="{% if not n.is_read %}fw-semibold{% endif %} {% if n.severity == 'CRITICAL' %}row-critical{% elif n.severity == 'WARNING' %}row-warning{% endif %}">
+            <td>{% if not n.is_read %}<span class="status-dot critical"></span>{% endif %}</td>
+            <td>
+              <div>{{ n.title }}</div>
+              <small class="text-muted">{{ n.message|truncatechars:80 }}</small>
+            </td>
+            <td>{{ n.get_alert_type_display }}</td>
+            <td>
+              {% if n.severity == 'CRITICAL' %}<span class="badge badge-critical">Critical</span>
+              {% elif n.severity == 'WARNING' %}<span class="badge badge-warning">Warning</span>
+              {% else %}<span class="badge bg-info">Info</span>{% endif %}
+            </td>
+            <td>{{ n.created_at|timesince }} ago</td>
+            <td class="text-nowrap">
+              {% if not n.is_read %}
+              <form method="post" action="{% url 'notifications:notification_mark_read' n.pk %}" class="d-inline">{% csrf_token %}
+                <button class="btn btn-sm btn-outline-secondary" title="Mark Read"><i class="fas fa-envelope-open"></i></button>
+              </form>
+              {% endif %}
+              {% if not n.is_resolved %}
+              <form method="post" action="{% url 'notifications:notification_resolve' n.pk %}" class="d-inline">{% csrf_token %}
+                <button class="btn btn-sm btn-outline-success" title="Resolve"><i class="fas fa-check"></i></button>
+              </form>
+              {% else %}
+              <span class="badge badge-normal">Resolved</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-check-circle text-success me-1"></i>No alerts to show.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% include 'includes/pagination.html' %}
+{% endblock %}

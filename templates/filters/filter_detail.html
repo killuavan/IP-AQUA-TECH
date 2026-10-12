@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}{{ object.name }}{% endblock %}
+{% block page_title %}Filter Detail{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card card-aqua">
+      <div class="card-header"><i class="fas fa-filter me-2"></i>{{ object.name }}</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Type</dt><dd class="col-sm-8">{{ object.get_filter_type_display }}</dd>
+          <dt class="col-sm-4">Condition</dt><dd class="col-sm-8">{{ object.get_condition_display }}</dd>
+          <dt class="col-sm-4">Life</dt><dd class="col-sm-8">{{ object.life_percentage }}%</dd>
+          <dt class="col-sm-4">Install Date</dt><dd class="col-sm-8">{{ object.install_date }}</dd>
+          <dt class="col-sm-4">Next Replacement</dt><dd class="col-sm-8">{{ object.next_replacement_date }}</dd>
+          <dt class="col-sm-4">Last Cleaned</dt><dd class="col-sm-8">{{ object.last_cleaned|default:"—" }}</dd>
+          <dt class="col-sm-4">Maintenance</dt><dd class="col-sm-8">{{ object.get_maintenance_status_display }}</dd>
+          <dt class="col-sm-4">Pressure</dt><dd class="col-sm-8">{{ object.system_pressure }} bar</dd>
+          <dt class="col-sm-4">Flow Status</dt><dd class="col-sm-8">{{ object.flow_status }}</dd>
+          <dt class="col-sm-4">Active</dt><dd class="col-sm-8">{% if object.is_active %}Yes{% else %}No{% endif %}</dd>
+          {% if object.notes %}<dt class="col-sm-4">Notes</dt><dd class="col-sm-8">{{ object.notes }}</dd>{% endif %}
+        </dl>
+        <a href="{% url 'filters:filter_edit' object.pk %}" class="btn btn-aqua mt-3">Edit</a>
+        <a href="{% url 'filters:filter_list' %}" class="btn btn-outline-secondary mt-3 ms-2">Back</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

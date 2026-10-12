@@ -1,0 +1,19 @@
+{
+  "algorithm": "GradientBoostingClassifier + regressors (mm, rainy days)",
+  "target": "Monthly rainfall level + total mm + rainy days",
+  "n_samples": 960,
+  "dataset": "synthetic PH seasonal climate normals + controlled noise",
+  "accuracy_level": 0.9219,
+  "mae_total_mm": 21.63,
+  "mae_rainy_days": 1.84,
+  "feature_names": [
+    "month",
+    "month_sin",
+    "month_cos",
+    "climate_normal_mm",
+    "lat",
+    "lon",
+    "year_offset"
+  ],
+  "description": "Predicts how rainy the next month will be for the project site. High-accuracy ensemble trained on seasonal rainfall patterns."
+}

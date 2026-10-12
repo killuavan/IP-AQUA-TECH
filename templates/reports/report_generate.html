@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Generate Report{% endblock %}
+{% block page_title %}Generate Report{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card card-aqua">
+      <div class="card-header"><i class="fas fa-file-export me-2"></i>Generate Report</div>
+      <div class="card-body">
+        <p class="text-muted small">Create Daily, Weekly, Monthly, or Annual reports. Export to PDF and/or Excel.</p>
+        <form method="post" id="reportForm">{% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label">{{ field.label }}</label>{{ field }}
+            {% if field.errors %}<div class="text-danger small">{{ field.errors.0 }}</div>{% endif %}
+          </div>
+          {% endfor %}
+          {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+          <div class="mb-3">
+            <label class="form-label">Quick Presets</label>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-sm btn-outline-primary preset-btn" data-type="DAILY" data-start="{{ presets.daily.0|date:'Y-m-d' }}" data-end="{{ presets.daily.1|date:'Y-m-d' }}">Daily</button>
+              <button type="button" class="btn btn-sm btn-outline-primary preset-btn" data-type="WEEKLY" data-start="{{ presets.weekly.0|date:'Y-m-d' }}" data-end="{{ presets.weekly.1|date:'Y-m-d' }}">Weekly</button>
+              <button type="button" class="btn btn-sm btn-outline-primary preset-btn" data-type="MONTHLY" data-start="{{ presets.monthly.0|date:'Y-m-d' }}" data-end="{{ presets.monthly.1|date:'Y-m-d' }}">Monthly</button>
+              <button type="button" class="btn btn-sm btn-outline-primary preset-btn" data-type="ANNUAL" data-start="{{ presets.annual.0|date:'Y-m-d' }}" data-end="{{ presets.annual.1|date:'Y-m-d' }}">Annual</button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-aqua"><i class="fas fa-cog me-1"></i>Generate</button>
+          <a href="{% url 'reports:report_list' %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.querySelectorAll('.preset-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.getElementById('id_report_type').value = this.dataset.type;
+    document.getElementById('id_start_date').value = this.dataset.start;
+    document.getElementById('id_end_date').value = this.dataset.end;
+    var labels = {DAILY:'Daily', WEEKLY:'Weekly', MONTHLY:'Monthly', ANNUAL:'Annual'};
+    document.getElementById('id_title').value = labels[this.dataset.type] + ' Report – ' + this.dataset.end;
+  });
+});
+</script>
+{% endblock %}

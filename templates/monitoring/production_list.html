@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Water Production{% endblock %}
+{% block page_title %}Water Production Monitoring{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="stat-card text-center"><div class="stat-label">Daily</div><div class="stat-value">{{ stats.daily }} L</div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card text-center"><div class="stat-label">Weekly</div><div class="stat-value">{{ stats.weekly }} L</div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card text-center"><div class="stat-label">Monthly</div><div class="stat-value">{{ stats.monthly }} L</div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card text-center"><div class="stat-label">Total</div><div class="stat-value">{{ stats.total }} L</div></div></div>
+</div>
+<div class="d-flex justify-content-end mb-3">
+  <a href="{% url 'monitoring:production_create' %}" class="btn btn-aqua"><i class="fas fa-plus me-1"></i>Add Record</a>
+</div>
+<div class="card card-aqua">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-aqua table-hover mb-0">
+        <thead><tr><th>Date</th><th>Production (L)</th><th>Target (L)</th><th>Target Met</th><th>Recorded By</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for obj in page_obj %}
+          <tr>
+            <td>{{ obj.date|date:"M d, Y" }}</td>
+            <td><strong>{{ obj.daily_production_liters }}</strong></td>
+            <td>{{ obj.target_liters }}</td>
+            <td>{% if obj.target_met %}<span class="badge badge-normal">Yes</span>{% else %}<span class="badge badge-warning">No</span>{% endif %}</td>
+            <td>{{ obj.recorded_by|default:"—" }}</td>
+            <td>
+              <a href="{% url 'monitoring:production_edit' obj.pk %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+              <form method="post" action="{% url 'monitoring:production_delete' obj.pk %}" class="d-inline" onsubmit="return confirm('Delete?');">{% csrf_token %}
+                <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-4">No production records.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% include 'includes/pagination.html' %}
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}User Management{% endblock %}
+{% block page_title %}User Management{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <form method="get" class="d-flex gap-2 flex-wrap">
+    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search users..." style="width:220px;">
+    <select name="role" class="form-select" style="width:150px;">
+      <option value="">All Roles</option>
+      <option value="ADMIN" {% if role == 'ADMIN' %}selected{% endif %}>Admin</option>
+      <option value="OPERATOR" {% if role == 'OPERATOR' %}selected{% endif %}>Operator</option>
+    </select>
+    <button type="submit" class="btn btn-aqua"><i class="fas fa-search"></i></button>
+  </form>
+  <a href="{% url 'accounts:user_create' %}" class="btn btn-aqua"><i class="fas fa-user-plus me-1"></i>Add User</a>
+</div>
+<div class="card card-aqua">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-aqua table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in page_obj %}
+          <tr>
+            <td><strong>{{ u.username }}</strong></td>
+            <td>{{ u.get_full_name|default:"—" }}</td>
+            <td>{{ u.email|default:"—" }}</td>
+            <td><span class="badge bg-primary">{{ u.get_role_display }}</span></td>
+            <td>
+              {% if u.is_active %}<span class="badge badge-normal">Active</span>
+              {% else %}<span class="badge badge-critical">Inactive</span>{% endif %}
+            </td>
+            <td>{{ u.date_joined|date:"M d, Y" }}</td>
+            <td class="text-nowrap">
+              <a href="{% url 'accounts:user_edit' u.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
+              <form method="post" action="{% url 'accounts:user_toggle' u.pk %}" class="d-inline">{% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-warning" title="Toggle Active"><i class="fas fa-power-off"></i></button>
+              </form>
+              {% if u != user %}
+              <form method="post" action="{% url 'accounts:user_delete' u.pk %}" class="d-inline" onsubmit="return confirm('Delete user {{ u.username }}?');">{% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No users found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% include 'includes/pagination.html' %}
+{% endblock %}

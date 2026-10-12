@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Water Quality Detail{% endblock %}
+{% block page_title %}Water Quality Detail{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card card-aqua">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="fas fa-flask me-2"></i>Reading – {{ object.recorded_at|date:"M d, Y H:i" }}</span>
+        {% if object.warning_level == 'NORMAL' %}<span class="badge badge-normal">Normal</span>
+        {% elif object.warning_level == 'FIRST' %}<span class="badge bg-info">First Level Warning</span>
+        {% elif object.warning_level == 'MIDDLE' %}<span class="badge badge-warning">Middle Level Warning</span>
+        {% else %}<span class="badge badge-critical">Danger Level Warning</span>{% endif %}
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4"><div class="stat-card text-center"><div class="stat-label">pH</div><div class="stat-value">{{ object.ph }}</div></div></div>
+          <div class="col-md-4"><div class="stat-card text-center"><div class="stat-label">TDS</div><div class="stat-value">{{ object.tds }} <small>ppm</small></div></div></div>
+          <div class="col-md-4"><div class="stat-card text-center"><div class="stat-label">Turbidity</div><div class="stat-value">{{ object.turbidity }} <small>NTU</small></div></div></div>
+          <div class="col-md-4"><div class="stat-card text-center"><div class="stat-label">Temperature</div><div class="stat-value">{{ object.temperature }}°C</div></div></div>
+          <div class="col-md-4"><div class="stat-card text-center"><div class="stat-label">Flow Rate</div><div class="stat-value">{{ object.flow_rate }} <small>L/min</small></div></div></div>
+          <div class="col-md-4"><div class="stat-card text-center"><div class="stat-label">Pressure</div><div class="stat-value">{{ object.water_pressure }} <small>bar</small></div></div></div>
+          <div class="col-md-4"><div class="stat-card text-center"><div class="stat-label">Water Level</div><div class="stat-value">{{ object.water_level }}%</div></div></div>
+        </div>
+        {% if display_notes %}<p class="mt-3 mb-0"><strong>Notes:</strong> {{ display_notes }}</p>{% endif %}
+        <p class="text-muted small mt-2">Recorded by: {{ object.recorded_by|default:"System" }}</p>
+        <a href="{% url 'monitoring:water_quality_edit' object.pk %}" class="btn btn-aqua mt-2"><i class="fas fa-edit me-1"></i>Edit</a>
+        <a href="{% url 'monitoring:water_quality_list' %}" class="btn btn-outline-secondary mt-2 ms-2">Back</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

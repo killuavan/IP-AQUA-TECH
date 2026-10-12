@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Prediction History{% endblock %}
+{% block page_title %}Prediction History{% endblock %}
+{% block content %}
+
+<div class="mb-3">
+  <a href="{% url 'predictions:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="fas fa-arrow-left me-1"></i>Back
+  </a>
+</div>
+
+<div class="card card-aqua">
+  <div class="card-header">
+    <span><i class="fas fa-calendar-alt me-2"></i>Next-month ML predictions</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-aqua mb-0">
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Month</th>
+            <th>Rain</th>
+            <th>mm</th>
+            <th>Rainy days</th>
+            <th>Cloudy %</th>
+            <th>Method</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in predictions %}
+          <tr>
+            <td class="small text-muted">{{ p.created_at|date:"M d, Y H:i" }}</td>
+            <td class="fw-semibold">{{ p.month_label }}</td>
+            <td>
+              <span class="badge rounded-pill
+                {% if p.rain_level == 'WET' %}bg-primary
+                {% elif p.rain_level == 'DRY' %}bg-warning text-dark
+                {% else %}bg-info text-dark{% endif %}">{{ p.rain_level }}</span>
+            </td>
+            <td>{{ p.predicted_total_mm|floatformat:1 }}</td>
+            <td>~{{ p.predicted_rainy_days }}</td>
+            <td class="fw-semibold" style="color:var(--aqua-primary);">
+              ~{{ p.spring_dirt_probability_pct|floatformat:0 }}%
+            </td>
+            <td class="small text-muted">{{ p.method }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No predictions yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer bg-white">
+    {% include 'includes/pagination.html' %}
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+

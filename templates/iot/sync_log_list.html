@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Firebase Sync Logs{% endblock %}
+{% block page_title %}Firebase Sync Logs{% endblock %}
+{% block content %}
+
+<div class="card card-aqua mb-4">
+  <div class="card-body py-3">
+    <a href="{% url 'iot:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i>IoT Dashboard
+    </a>
+  </div>
+</div>
+
+<div class="card card-aqua">
+  <div class="card-header">
+    <span><i class="fas fa-history me-2"></i>Sync history</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-aqua mb-0">
+        <thead>
+          <tr>
+            <th>Started</th>
+            <th>Status</th>
+            <th>Imported</th>
+            <th>Message</th>
+            <th>By</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in page_obj %}
+          <tr>
+            <td class="small text-muted">{{ log.started_at|date:"M d, Y H:i:s" }}</td>
+            <td>
+              {% if log.status == 'SUCCESS' %}<span class="badge badge-normal rounded-pill">Success</span>
+              {% elif log.status == 'FAILED' %}<span class="badge badge-critical rounded-pill">Failed</span>
+              {% elif log.status == 'SKIPPED' %}<span class="badge badge-warning rounded-pill">Skipped</span>
+              {% else %}<span class="badge bg-secondary rounded-pill">{{ log.get_status_display }}</span>{% endif %}
+            </td>
+            <td class="fw-semibold">{{ log.records_imported }}</td>
+            <td class="small">{{ log.message }}</td>
+            <td class="small text-muted">{{ log.triggered_by|default:"system" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-4">No sync logs yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer bg-white">
+    {% include 'includes/pagination.html' %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="fas fa-tint"></i></div>
+    <div>
+      <h5>IP Aqua Tech</h5>
+      <small>Water Filtration Monitor</small>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Main</div>
+    <a href="{% url 'dashboard:index' %}" class="nav-link {% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}">
+      <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+    <a href="{% url 'notifications:notification_list' %}" class="nav-link {% if request.resolver_match.app_name == 'notifications' %}active{% endif %}">
+      <i class="fas fa-bell"></i> Alerts
+      {% if unread_notification_count %}
+      <span class="badge bg-danger ms-auto">{{ unread_notification_count }}</span>
+      {% endif %}
+    </a>
+
+    <div class="nav-label">Monitoring</div>
+    <a href="{% url 'monitoring:water_quality_list' %}" class="nav-link {% if 'water_quality' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="fas fa-flask"></i> Water Quality
+    </a>
+    <a href="{% url 'monitoring:threshold_settings' %}" class="nav-link {% if request.resolver_match.url_name == 'threshold_settings' %}active{% endif %}">
+      <i class="fas fa-gauge-high"></i> Thresholds
+    </a>
+    <a href="{% url 'solar:battery_list' %}" class="nav-link {% if 'battery' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="fas fa-battery-three-quarters"></i> Battery
+    </a>
+    <a href="{% url 'monitoring:pump_list' %}" class="nav-link {% if 'pump' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="fas fa-cogs"></i> Pumps
+    </a>
+    <a href="{% url 'monitoring:production_list' %}" class="nav-link {% if 'production' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="fas fa-chart-area"></i> Production
+    </a>
+
+    <div class="nav-label">Smart</div>
+    <a href="{% url 'iot:dashboard' %}" class="nav-link {% if request.resolver_match.app_name == 'iot' and 'sensor' not in request.resolver_match.url_name %}active{% endif %}">
+      <i class="fas fa-wifi"></i> IoT
+    </a>
+    <a href="{% url 'predictions:dashboard' %}" class="nav-link {% if request.resolver_match.app_name == 'predictions' %}active{% endif %}">
+      <i class="fas fa-cloud-sun-rain"></i> Predict
+    </a>
+
+    <div class="nav-label">Ops</div>
+    <a href="{% url 'maintenance:maintenance_list' %}" class="nav-link {% if request.resolver_match.app_name == 'maintenance' %}active{% endif %}">
+      <i class="fas fa-tools"></i> Maintenance
+    </a>
+    <a href="{% url 'reports:report_list' %}" class="nav-link {% if request.resolver_match.app_name == 'reports' %}active{% endif %}">
+      <i class="fas fa-file-alt"></i> Reports
+    </a>
+
+    {% if user.is_admin_user or user.is_superuser %}
+    <div class="nav-label">Admin</div>
+    <a href="{% url 'accounts:user_list' %}" class="nav-link {% if 'user_' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="fas fa-users"></i> Users
+    </a>
+    {% endif %}
+
+    <div class="nav-label">Account</div>
+    <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+      <i class="fas fa-user-circle"></i> Profile
+    </a>
+    <a href="{% url 'accounts:logout' %}" class="nav-link">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    &copy; {% now "Y" %} IP Aqua Tech
+  </div>
+</aside>

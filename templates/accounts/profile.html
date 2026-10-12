@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card card-aqua">
+      <div class="card-header"><i class="fas fa-user-circle me-2"></i>Profile Information</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <span class="text-muted">Username:</span>
+          <strong>{{ user.username }}</strong>
+          <span class="badge bg-primary ms-2">{{ user.get_role_display }}</span>
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div class="text-danger small">{{ field.errors.0 }}</div>{% endif %}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-aqua"><i class="fas fa-save me-1"></i>Save Changes</button>
+          <a href="{% url 'accounts:change_password' %}" class="btn btn-aqua-outline ms-2">Change Password</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
