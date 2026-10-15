@@ -11,10 +11,36 @@ from monitoring.models import WaterQuality
 
 
 DEMO_MARKER = '[SIMULATED DEMO - NOT A POTABILITY TEST]'
+MEASUREMENT_LIMITS = {
+    'ph': (700, 760, 5),
+    'tds': (9000, 18000, 150),
+    'turbidity': (20, 90, 3),
+    'flow_rate': (0, 1200, 30),
+    'water_pressure': (150, 300, 5),
+    'water_level': (2500, 10000, 30),
+}
+
+
+def next_measurements(cursor, previous):
+    rng = random.Random(f'{cursor.isoformat()}-measurements')
+    values = {}
+    for field, (minimum, maximum, max_step) in MEASUREMENT_LIMITS.items():
+        previous_value = previous.get(field) if previous else None
+        if previous_value is None:
+            value = rng.randint(minimum, maximum)
+        else:
+            value = int(previous_value * 100) + rng.randint(-max_step, max_step)
+            if value < minimum:
+                value = minimum + (minimum - value)
+            elif value > maximum:
+                value = maximum - (value - maximum)
+            value = min(max(value, minimum), maximum)
+        values[field] = Decimal(value) / Decimal('100')
+    return values
 
 
 class Command(BaseCommand):
-    help = 'Create simulated water-quality readings every 10 minutes for a date range.'
+    help = 'Create simulated water-quality readings at a configurable nominal interval.'
 
     def add_arguments(self, parser):
         parser.add_argument('--start', type=date.fromisoformat, default=date(2026, 9, 22))
@@ -48,34 +74,55 @@ class Command(BaseCommand):
         records = []
         adjusted_rows = []
         unchanged_count = 0
+        previous_measurements = None
         cursor = start_at
         while cursor < end_at:
             timestamp_rng = random.Random(f'{cursor.isoformat()}-timestamp')
-            recorded_at = cursor + timedelta(seconds=timestamp_rng.randint(1, 59))
+            max_jitter_seconds = max(1, interval * 60 // 3)
+            recorded_at = cursor + timedelta(
+                seconds=timestamp_rng.randint(1, max_jitter_seconds)
+            )
+            measurements = next_measurements(cursor, previous_measurements)
             existing = existing_by_slot.get(cursor)
             if existing is None:
-                rng = random.Random(cursor.isoformat())
+                local_hour = timezone.localtime(recorded_at, tz).hour
+                if local_hour >= 21 or local_hour < 6:
+                    temperature_base = 24
+                elif local_hour < 10:
+                    temperature_base = 27
+                elif local_hour < 17:
+                    temperature_base = 30
+                else:
+                    temperature_base = 28
+                temperature_rng = random.Random(f'{cursor.isoformat()}-temperature')
                 records.append(WaterQuality(
-                    ph=Decimal(str(round(rng.uniform(7.0, 7.6), 2))),
-                    tds=Decimal(str(round(rng.uniform(90, 180), 2))),
-                    turbidity=Decimal(str(round(rng.uniform(0.2, 0.9), 2))),
-                    temperature=Decimal(str(round(rng.uniform(24, 29), 2))),
-                    flow_rate=Decimal(str(round(rng.uniform(0, 12), 2))),
-                    water_pressure=Decimal(str(round(rng.uniform(1.5, 3.0), 2))),
-                    water_level=Decimal(str(round(rng.uniform(25, 100), 2))),
+                    **measurements,
+                    temperature=Decimal(temperature_base) + (
+                        Decimal(temperature_rng.randint(-50, 50)) / Decimal('100')
+                    ),
                     recorded_at=recorded_at,
                     notes=f'{DEMO_MARKER} Synthetic values; laboratory testing is required to establish potability.',
                 ))
-            elif existing.recorded_at != recorded_at:
-                existing.recorded_at = recorded_at
-                adjusted_rows.append(existing)
             else:
-                unchanged_count += 1
+                changed = existing.recorded_at != recorded_at
+                existing.recorded_at = recorded_at
+                for field, value in measurements.items():
+                    if getattr(existing, field) != value:
+                        setattr(existing, field, value)
+                        changed = True
+                if changed:
+                    adjusted_rows.append(existing)
+                else:
+                    unchanged_count += 1
+            previous_measurements = measurements
             cursor += timedelta(minutes=interval)
 
         with transaction.atomic():
             if adjusted_rows:
-                WaterQuality.objects.bulk_update(adjusted_rows, ['recorded_at'])
+                WaterQuality.objects.bulk_update(
+                    adjusted_rows,
+                    ['recorded_at', *MEASUREMENT_LIMITS],
+                )
             for record in records:
                 record.save()
 

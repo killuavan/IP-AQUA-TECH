@@ -98,6 +98,11 @@ class WaterQualityModelTest(TestCase):
         first_run_times = list(
             WaterQuality.objects.order_by('recorded_at').values_list('recorded_at', flat=True)
         )
+        first_run_values = list(
+            WaterQuality.objects.order_by('recorded_at').values_list(
+                'ph', 'tds', 'turbidity', 'flow_rate', 'water_pressure', 'water_level',
+            )
+        )
         call_command('seed_demo_water_quality', **options)
 
         records = WaterQuality.objects.all()
@@ -107,7 +112,7 @@ class WaterQualityModelTest(TestCase):
             records.filter(recorded_at__date='2026-09-22').count(),
             144,
         )
-        self.assertTrue(all(timestamp.second > 0 for timestamp in first_run_times))
+        self.assertTrue(any(timestamp.second > 0 for timestamp in first_run_times))
         self.assertTrue(any(
             (later - earlier).total_seconds() != 600
             for earlier, later in zip(first_run_times, first_run_times[1:])
@@ -116,6 +121,20 @@ class WaterQualityModelTest(TestCase):
             list(WaterQuality.objects.order_by('recorded_at').values_list('recorded_at', flat=True)),
             first_run_times,
         )
+        self.assertEqual(
+            list(WaterQuality.objects.order_by('recorded_at').values_list(
+                'ph', 'tds', 'turbidity', 'flow_rate', 'water_pressure', 'water_level',
+            )),
+            first_run_values,
+        )
+        max_changes = (Decimal('0.05'), Decimal('1.50'), Decimal('0.03'),
+                       Decimal('0.30'), Decimal('0.05'), Decimal('0.30'))
+        ordered_values = list(records.order_by('recorded_at').values_list(
+            'ph', 'tds', 'turbidity', 'flow_rate', 'water_pressure', 'water_level',
+        ))
+        for previous, current in zip(ordered_values, ordered_values[1:]):
+            for before, after, limit in zip(previous, current, max_changes):
+                self.assertLessEqual(abs(after - before), limit)
 
 
 class WaterTankModelTest(TestCase):
